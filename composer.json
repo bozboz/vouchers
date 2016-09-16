@@ -1,0 +1,28 @@
+{
+    "name": "bozboz/vouchers",
+    "description": "Voucher/discount functionality for Bozboz sites",
+    "authors": [
+        {
+            "name": "Sam King",
+            "email": "sdking02@gmail.com"
+        },
+        {
+            "name": "Jim Hollington",
+            "email": "jim@oddvalue.co.uk"
+        }
+    ],
+    "require": {
+        "bozboz/admin": "2.*"
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "http://laravel-packages.staging.bozboz.co.uk"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Bozboz\\Ecommerce\\Vouchers\\": "src/"
+        }
+    }
+}
