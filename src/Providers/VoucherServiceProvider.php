@@ -2,6 +2,7 @@
 
 namespace Bozboz\Ecommerce\Vouchers\Providers;
 
+use Bozboz\Ecommerce\Vouchers\ProductModifiedInCartEvent;
 use Illuminate\Support\ServiceProvider;
 
 class VoucherServiceProvider extends ServiceProvider
@@ -19,5 +20,15 @@ class VoucherServiceProvider extends ServiceProvider
         ], 'migrations');
 
         require "$packageRoot/src/Http/routes.php";
+
+        $this->app['events']->listen(
+            'cart.item.updated: *',
+            ProductModifiedInCartEvent::class
+        );
+
+        $this->app['events']->listen(
+            'cart.item.removed: *',
+            ProductModifiedInCartEvent::class
+        );
     }
 }

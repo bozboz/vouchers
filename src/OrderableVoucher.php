@@ -45,7 +45,7 @@ class OrderableVoucher extends Voucher implements Orderable
 
 	public function purchased($quantity)
 	{
-
+		$this->increment('current_uses');
 	}
 
 	/**
