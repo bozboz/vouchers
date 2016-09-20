@@ -20,7 +20,7 @@ class OrderableVoucher extends Voucher implements Orderable
 
 	public function items()
 	{
-		return $this->morphMany('Bozboz\Ecommerce\Order\Item', 'orderable');
+		return $this->morphMany('Bozboz\Ecommerce\Orders\Item', 'orderable');
 	}
 
 	public function canAdjustQuantity()

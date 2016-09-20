@@ -2,7 +2,7 @@
 
 namespace Bozboz\Ecommerce\Vouchers;
 
-use Bozboz\Ecommerce\Order\Item;
+use Bozboz\Ecommerce\Orders\Item;
 
 class ProductModifiedInCartEvent
 {
