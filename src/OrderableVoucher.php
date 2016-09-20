@@ -2,13 +2,12 @@
 
 namespace Bozboz\Ecommerce\Vouchers;
 
-use Illuminate\Support\Facades\Validator;
+use Bozboz\Ecommerce\Orders\Item;
+use Bozboz\Ecommerce\Orders\Order;
+use Bozboz\Ecommerce\Orders\OrderableException;
+use Bozboz\Ecommerce\Orders\Orderable;
 use Illuminate\Support\Collection;
-
-use Bozboz\Ecommerce\Order\Orderable;
-use Bozboz\Ecommerce\Order\OrderableException;
-use Bozboz\Ecommerce\Order\Order;
-use Bozboz\Ecommerce\Order\Item;
+use Illuminate\Support\Facades\Validator;
 
 class OrderableVoucher extends Voucher implements Orderable
 {
@@ -32,6 +31,21 @@ class OrderableVoucher extends Voucher implements Orderable
 	public function canDelete()
 	{
 		return true;
+	}
+
+	public function calculateAmountToRefund(Item $item, $quantity)
+	{
+		return 0;
+	}
+
+	public function isTaxable()
+	{
+		return false;
+	}
+
+	public function purchased($quantity)
+	{
+
 	}
 
 	/**
