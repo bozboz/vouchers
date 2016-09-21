@@ -2,10 +2,10 @@
 
 namespace Bozboz\Ecommerce\Vouchers;
 
-use App\Ecommerce\Products\Product;
+use Bozboz\Ecommerce\Products\Product;
 use Bozboz\Admin\Base\Model;
 
-class Voucher extends Model
+abstract class Voucher extends Model
 {
     public $dates = [
         'start_date',
@@ -23,6 +23,8 @@ class Voucher extends Model
         'end_date',
         'min_order_pence',
         'max_order_pence',
+        'min_order',
+        'max_order',
     ];
 
     protected $nullable = [
@@ -63,7 +65,7 @@ class Voucher extends Model
 
     public function setMinOrderAttribute($value)
     {
-        $this->attributes['min_order_pence'] = str_replace(',', '', $value) * 100;
+        $this->attributes['min_order_pence'] = $value > 0 ? str_replace(',', '', $value) * 100 : null;
     }
 
     public function getMaxOrderAttribute()
@@ -73,19 +75,21 @@ class Voucher extends Model
 
     public function setMaxOrderAttribute($value)
     {
-        $this->attributes['max_order_pence'] = str_replace(',', '', $value) * 100;
+        $this->attributes['max_order_pence'] = $value > 0 ? str_replace(',', '', $value) * 100 : null;
     }
+
+    abstract protected function getProductClass();
 
     public function discountedProducts()
     {
-        return $this->belongsToMany(Product::class,
+        return $this->belongsToMany($this->getProductClass(),
             'discounted_products', 'voucher_id', 'product_id'
         );
     }
 
     public function discountExemptProducts()
     {
-        return $this->belongsToMany(Product::class,
+        return $this->belongsToMany($this->getProductClass(),
             'discount_exempt_products', 'voucher_id', 'product_id'
         );
     }
