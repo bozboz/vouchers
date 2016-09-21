@@ -9,7 +9,7 @@ use Bozboz\Ecommerce\Orders\Orderable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 
-class OrderableVoucher extends Voucher implements Orderable
+abstract class OrderableVoucher extends Voucher implements Orderable
 {
 	public $table = 'vouchers';
 
@@ -61,13 +61,15 @@ class OrderableVoucher extends Voucher implements Orderable
 	{
 		$values = array(
 			'current_uses' => $this->current_uses + 1,
-			'expiry_date' => $this->expiry_date,
+			'start_date' => $this->start_date,
+			'end_date' => $this->end_date,
 			'order_total' => $order->totalPrice()
 		);
 
 		$rules = array(
-			'expiry_date' => 'after:' . date('Y-m-d'),
-			'order_total' => 'numeric|min:' . $this->min_order
+			'start_date' => 'before:' . date('Y-m-d'),
+			'end_date' => 'after:' . date('Y-m-d'),
+			'order_total' => "numeric|min:$this->min_order_pence" . ($this->max_order_pence ? "|max:$this->max_order_pence" : null),
 		);
 
 		if ($this->max_uses > 0) {
@@ -75,12 +77,17 @@ class OrderableVoucher extends Voucher implements Orderable
 		}
 
 		$messages = array(
-			'max' => 'This voucher has exceded the max use',
+			'current_uses' => 'This voucher has exceded the max use',
+			'before' => 'This voucher is not available yet',
 			'after' => 'This voucher has expired',
-			'min' => sprintf(
+			'order_total.min' => sprintf(
 				'Your order must be a minimum of %s to use this voucher code',
-				format_money($this->min_order)
-			)
+				format_money($this->min_order_pence)
+			),
+			'order_total.max' => sprintf(
+				'Your order must be under %s to use this voucher code',
+				format_money($this->max_order_pence)
+			),
 		);
 
 		$validation = Validator::make($values, $rules, $messages);
