@@ -9,7 +9,7 @@ trait Discounted
     public function getDiscountedAmount(Voucher $voucher, Item $item)
     {
         if ($voucher->isProductValid($this)) {
-            return $item->total_price_pence;
+            return $item->total_price_pence_ex_vat;
         }
     }
 }
