@@ -7,7 +7,7 @@ use Bozboz\Admin\Base\Model;
 
 abstract class Voucher extends Model
 {
-    public $dates = [
+    protected $dates = [
         'start_date',
         'end_date',
     ];

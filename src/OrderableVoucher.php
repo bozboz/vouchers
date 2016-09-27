@@ -13,11 +13,6 @@ abstract class OrderableVoucher extends Voucher implements Orderable
 {
 	public $table = 'vouchers';
 
-	public function getDates()
-	{
-		return array('created_at', 'updated_at', 'expiry_date');
-	}
-
 	public function items()
 	{
 		return $this->morphMany('Bozboz\Ecommerce\Orders\Item', 'orderable');
