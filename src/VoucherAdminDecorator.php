@@ -30,8 +30,8 @@ abstract class VoucherAdminDecorator extends ModelAdminDecorator
             'Usage' => sprintf('%d/%s', $instance->current_uses, $instance->max_uses ? $instance->max_uses : '∞'),
             'Starts' => $instance->start_date ? $instance->start_date->diffForHumans() : '-',
             'Expires' => $instance->end_date ? $instance->end_date->diffForHumans() : 'never',
-            'Min. Order' => $instance->min_order ? format_money($instance->min_order) : '-',
-            'Max. Order' => $instance->max_order ? format_money($instance->max_order) : '-',
+            'Min. Order' => $instance->min_order ? format_money($instance->min_order_pence) : '-',
+            'Max. Order' => $instance->max_order ? format_money($instance->max_order_pence) : '-',
         ];
     }
 
@@ -60,6 +60,6 @@ abstract class VoucherAdminDecorator extends ModelAdminDecorator
 
     public function getSyncRelations()
     {
-        return [/*'discountedProducts', 'discountExemptProducts'*/];
+        return ['discountedProducts', 'discountExemptProducts'];
     }
 }
