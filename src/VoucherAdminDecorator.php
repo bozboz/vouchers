@@ -3,20 +3,22 @@
 namespace Bozboz\Ecommerce\Vouchers;
 
 
-use Bozboz\Admin\Base\ModelAdminDecorator;
-use Bozboz\Admin\Fields\BelongsToManyField;
+use Bozboz\Admin\Fields\TextField;
 use Bozboz\Admin\Fields\CheckboxField;
 use Bozboz\Admin\Fields\DateTimeField;
-use Bozboz\Admin\Fields\TextField;
 use Bozboz\Admin\Fields\TextareaField;
+use Bozboz\Admin\Base\ModelAdminDecorator;
+use Bozboz\Admin\Fields\BelongsToManyField;
 use Bozboz\Ecommerce\Products\Pricing\PriceField;
-use Bozboz\Ecommerce\Products\ProductDecorator;
+use Bozboz\Ecommerce\Vouchers\Contracts\Voucher as VoucherContract;
+use Bozboz\Ecommerce\Vouchers\Contracts\VoucherAdminDecorator as Contract;
+use Bozboz\Ecommerce\Vouchers\Contracts\DiscountedProductAdminDecorator as ProductDecoratorContract;
 
-abstract class VoucherAdminDecorator extends ModelAdminDecorator
+class VoucherAdminDecorator extends ModelAdminDecorator implements Contract
 {
     protected $products;
 
-    public function __construct(ProductDecorator $products, Voucher $voucher)
+    public function __construct(ProductDecoratorContract $products, VoucherContract $voucher)
     {
         parent::__construct($voucher);
         $this->products = $products;

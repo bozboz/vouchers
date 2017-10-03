@@ -3,7 +3,7 @@
 namespace Bozboz\Ecommerce\Vouchers\Http\Controllers\Admin;
 
 use Bozboz\Admin\Http\Controllers\ModelAdminController;
-use Bozboz\Ecommerce\Vouchers\VoucherAdminDecorator;
+use Bozboz\Ecommerce\Vouchers\Contracts\VoucherAdminDecorator;
 
 class VoucherController extends ModelAdminController
 {

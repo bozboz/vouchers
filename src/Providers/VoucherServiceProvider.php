@@ -9,6 +9,10 @@ class VoucherServiceProvider extends ServiceProvider
 {
     public function register()
     {
+        $this->app->bind(
+            \Bozboz\Ecommerce\Vouchers\Contracts\VoucherAdminDecorator::class,
+            \Bozboz\Ecommerce\Vouchers\VoucherAdminDecorator::class
+        );
     }
 
     public function boot()
@@ -40,5 +44,9 @@ class VoucherServiceProvider extends ServiceProvider
                 }
             }
         );
+
+        if (! $this->app->routesAreCached()) {
+            require "{$packageRoot}/src/Http/routes.php";
+        }
     }
 }
