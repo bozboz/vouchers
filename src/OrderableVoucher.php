@@ -13,169 +13,228 @@ abstract class OrderableVoucher extends Voucher implements Orderable
 {
 	public $table = 'vouchers';
 
-	public function items()
-	{
-		return $this->morphMany('Bozboz\Ecommerce\Orders\Item', 'orderable');
-	}
+    /**
+     * Return list of items associated with this orderable
+     *
+     * @return Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function items()
+    {
+        return $this->morphMany(Item::class, 'orderable');
+    }
 
-	public function canAdjustQuantity()
-	{
-		return false;
-	}
+    /**
+     * Determine whether Orderable model can have its quantity adjusted
+     *
+     * @return boolean
+     */
+    public function canAdjustQuantity()
+    {
+        return false;
+    }
 
-	public function canDelete()
-	{
-		return true;
-	}
+    /**
+     * Determine whether Orderable model can be deleted once set
+     *
+     * @return boolean
+     */
+    public function canDelete()
+    {
+        return true;
+    }
 
-	public function calculateAmountToRefund(Item $item, $quantity)
-	{
-		return 0;
-	}
+    /**
+      * Validate voucher item, based on current uses, expiry date and order total
+      *
+      * @param  int  $quantity
+      * @param  Bozboz\Ecommerce\Order\Item  $item
+      * @param  Bozboz\Ecommerce\Order\Order  $order
+      * @throws Bozboz\Ecommerce\Order\Orderable
+      * @return void
+      */
+    public function validate($quantity, Item $item, Order $order)
+    {
+        $values = [
+            'current_uses' => $this->current_uses + 1,
+            'start_date' => $this->start_date,
+            'end_date' => $this->end_date,
+            'order_total' => $order->totalPrice()
+        ];
 
-	public function isTaxable()
-	{
-		return false;
-	}
+        $rules = [
+            'start_date' => 'before:' . date('Y-m-d'),
+            'end_date' => 'after:' . date('Y-m-d'),
+            'order_total' => "numeric|min:$this->min_order_pence" . ($this->max_order_pence ? "|max:$this->max_order_pence" : null),
+        ];
 
-	public function purchased($quantity)
-	{
-		$this->increment('current_uses');
-	}
+        if ($this->max_uses > 0) {
+            $rules['current_uses'] = 'numeric|max:' . $this->max_uses;
+        }
 
-	/**
-	 * Validate voucher item, based on current uses, expiry date and order total
-	 *
-	 * @param  int  $quantity
-	 * @param  Bozboz\Ecommerce\Order\Item  $item
-	 * @param  Bozboz\Ecommerce\Order\Order  $order
-	 * @throws Bozboz\Ecommerce\Order\Orderable
-	 * @return void
-	 */
-	public function validate($quantity, Item $item, Order $order)
-	{
-		$values = array(
-			'current_uses' => $this->current_uses + 1,
-			'start_date' => $this->start_date,
-			'end_date' => $this->end_date,
-			'order_total' => $order->totalPrice()
-		);
+        $messages = [
+            'current_uses' => 'This voucher has exceded the max use',
+            'before' => 'This voucher is not available yet',
+            'after' => 'This voucher has expired',
+            'order_total.min' => sprintf(
+                'Your order must be a minimum of %s to use this voucher code',
+                format_money($this->min_order_pence)
+            ),
+            'order_total.max' => sprintf(
+                'Your order must be under %s to use this voucher code',
+                format_money($this->max_order_pence)
+            ),
+        ];
 
-		$rules = array(
-			'start_date' => 'before:' . date('Y-m-d'),
-			'end_date' => 'after:' . date('Y-m-d'),
-			'order_total' => "numeric|min:$this->min_order_pence" . ($this->max_order_pence ? "|max:$this->max_order_pence" : null),
-		);
+        $validation = Validator::make($values, $rules, $messages);
 
-		if ($this->max_uses > 0) {
-			$rules['current_uses'] = 'numeric|max:' . $this->max_uses;
-		}
+        try {
+            if ($validation->fails()) throw new OrderableException($validation);
+            $this->calculatePrice($quantity, $order);
+        } catch (OrderableException $e) {
+            $item->delete();
+            throw $e;
+        }
+    }
 
-		$messages = array(
-			'current_uses' => 'This voucher has exceded the max use',
-			'before' => 'This voucher is not available yet',
-			'after' => 'This voucher has expired',
-			'order_total.min' => sprintf(
-				'Your order must be a minimum of %s to use this voucher code',
-				format_money($this->min_order_pence)
-			),
-			'order_total.max' => sprintf(
-				'Your order must be under %s to use this voucher code',
-				format_money($this->max_order_pence)
-			),
-		);
+    public function getValidationStartDateAttribute()
+    {
+        return $this->start_date ?: Carbon::today();
+    }
 
-		$validation = Validator::make($values, $rules, $messages);
+    public function getValidationEndDateAttribute()
+    {
+        return $this->end_date ?: Carbon::tomorrow();
+    }
 
-		try {
-			if ($validation->fails()) throw new OrderableException($validation);
-			$this->calculatePrice($quantity, $order);
-		} catch (OrderableException $e) {
-			$item->delete();
-			throw $e;
-		}
-	}
+    public function getValidationMinOrderAttribute()
+    {
+        return intval($this->min_order_pence);
+    }
 
-	/**
-	 * Calculate price voucher gives off given $order
-	 *
-	 * @param  int  $quantity
-	 * @param  Bozboz\Ecommerce\Order\Order  $order
-	 * @throws Bozboz\Ecommerce\Order\OrderableException
-	 * @return int
-	 */
-	public function calculatePrice($quantity, Order $order)
-	{
-		$orderTotal = $this->calculateOrderTotal($order);
+    public function getValidationMaxOrderAttribute()
+    {
+        return $this->max_order_pence ?: 99999999999;
+    }
 
-		$this->validateOrderTotal($orderTotal);
+    protected function orderHasValidProducts($order)
+    {
+        return ! $order->items->filter(function($item) {
+            return $item->orderable
+                && $item->orderable instanceof Discountable
+                && $this->isProductValid($item->orderable->ticket);
+        })->isEmpty();
+    }
 
-		return max($this->getValue($orderTotal), -$orderTotal);
-	}
+    /**
+     * Calculate price voucher gives off given $order
+     *
+     * @param  int  $quantity
+     * @param  Bozboz\Ecommerce\Order\Order  $order
+     * @throws Bozboz\Ecommerce\Order\OrderableException
+     * @return int
+     */
+    public function calculatePrice($quantity, Order $order)
+    {
+        $orderTotal = $this->calculateOrderTotal($order);
 
-	/**
-	 * Filter collection of items by voucher's discounted and discount-exempt
-	 * products
-	 *
-	 * @param  Bozboz\Ecommerce\Order\Order  $order
-	 * @return int
-	 */
-	protected function calculateOrderTotal(Order $order)
-	{
-		return $order->items->sum(function($item) {
-			if ($item->orderable instanceof Discountable) {
-				return $item->orderable->getDiscountedAmount($this, $item);
-			}
-		});
-	}
+        $this->validateOrderTotal($orderTotal);
 
-	/**
-	 * Ensure voucher matches any items
-	 *
-	 * @param  int  $orderTotal
-	 * @throws Bozboz\Ecommerce\Order\OrderableException
-	 * @return void
-	 */
-	protected function validateOrderTotal($orderTotal)
-	{
-		$validation = Validator::make(
-			['orderTotal' => $orderTotal],
-			['orderTotal' => 'numeric|min:1'],
-			['min' => 'The voucher is not valid for your order']
-		);
+        return max($this->getValue($orderTotal), -$orderTotal);
+    }
 
-		if ($validation->fails()) throw new OrderableException($validation);
-	}
+    /**
+     * Filter collection of items by voucher's discounted and discount-exempt
+     * products
+     *
+     * @param  Bozboz\Ecommerce\Order\Order  $order
+     * @return int
+     */
+    protected function calculateOrderTotal(Order $order)
+    {
+        return $order->items->sum(function($item) {
+            if ($item->orderable instanceof Discountable) {
+                return $item->orderable->getDiscountedAmount($this, $item);
+            }
+        });
+    }
 
-	public function calculateWeight($quantity)
-	{
-		return 0;
-	}
+    /**
+     * Ensure voucher matches any items
+     *
+     * @param  int  $orderTotal
+     * @throws Bozboz\Ecommerce\Order\OrderableException
+     * @return void
+     */
+    protected function validateOrderTotal($orderTotal)
+    {
+        $validation = Validator::make(
+            ['orderTotal' => $orderTotal],
+            ['orderTotal' => 'numeric|min:1'],
+            ['min' => 'The voucher is not valid for your order']
+        );
 
-	public function calculateTax(Item $item, $taxAmount)
-	{
+        if ($validation->fails()) throw new OrderableException($validation);
+    }
 
-	}
+    protected function getValue($orderTotal)
+    {
+        return $this->is_percent ? -($orderTotal * $this->value / 100) : -$this->value;
+    }
 
-	public function zeroTax(Item $item, $taxAmount)
-	{
+    /**
+     * Calculate weight of item, based on quantity
+     *
+     * @param  int  $quantity
+     * @return float
+     */
+    public function calculateWeight($quantity)
+    {
+        return 0;
+    }
 
-	}
+    /**
+     * Consistent label identifier for orderable item
+     *
+     * @return string
+     */
+    public function label()
+    {
+        return "{$this->code} ({$this->description})";
+    }
 
-	public function label()
-	{
-		return sprintf('%s (%s)', $this->description, $this->code);
-	}
+    /**
+     * Calculate amount to refund, based on item and quantity
+     *
+     * @param  Bozboz\Ecommerce\Order\Item  $item
+     * @param  int  $quantity
+     * @return int
+     */
+    public function calculateAmountToRefund(Item $item, $quantity)
+    {
+        return 0;
+    }
 
-	public function detailedLabel()
-	{
-		return $this->label();
-	}
+    /**
+     * Determine if orderable is taxable or not
+     *
+     * @return boolean
+     */
+    public function isTaxable()
+    {
+        return ! $this->tax_exempt;
+    }
 
-	protected function getValue($orderTotal)
-	{
-		return $this->is_percent ? -($orderTotal * $this->value / 100) : -$this->value;
-	}
+    /**
+     * Perform any actions necessary upon successful purchase
+     *
+     * @param  int $quantity
+     * @return void
+     */
+    public function purchased($quantity)
+    {
+        $this->current_uses += 1;
+        $this->save();
+    }
 
 	public function image()
 	{

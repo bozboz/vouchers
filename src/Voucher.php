@@ -3,13 +3,9 @@
 namespace Bozboz\Ecommerce\Vouchers;
 
 use Bozboz\Admin\Base\Model;
-use Bozboz\Ecommerce\Orders\Item;
-use Bozboz\Ecommerce\Orders\Order;
-use Bozboz\Ecommerce\Orders\Orderable;
-use Bozboz\Ecommerce\Products\Product;
 use Bozboz\Ecommerce\Vouchers\Contracts\Voucher as Contract;
 
-abstract class Voucher extends Model implements Contract, Orderable
+abstract class Voucher extends Model implements Contract
 {
     protected $dates = [
         'start_date',
@@ -119,128 +115,5 @@ abstract class Voucher extends Model implements Contract, Orderable
         }
 
         return true;
-    }
-
-    /**
-     * Return list of items associated with this orderable
-     *
-     * @return Illuminate\Database\Eloquent\Relations\MorphMany
-     */
-    public function items()
-    {
-        return $this->morphMany(Item::class, 'orderable');
-    }
-
-    /**
-     * Determine whether Orderable model can have its quantity adjusted
-     *
-     * @return boolean
-     */
-    public function canAdjustQuantity()
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether Orderable model can be deleted once set
-     *
-     * @return boolean
-     */
-    public function canDelete()
-    {
-        return true;
-    }
-
-    /**
-     * Validate item in context of order and quantity requested
-     *
-     * @param  int  $quantity
-     * @param  Bozboz\Ecommerce\Order\Order  $order
-     * @return void
-     */
-    public function validate($quantity, Item $item, Order $order)
-    {
-        # TODO
-        return true;
-    }
-
-    /**
-     * Calculate price of item, based on quantity and order parameters
-     *
-     * @param  int  $quantity
-     * @param  Bozboz\Ecommerce\Order\Order  $order
-     * @return float
-     */
-    public function calculatePrice($quantity, Order $order)
-    {
-        if ($this->is_percent) {
-            return ($order->totalPrice() * -1) + ($order->totalPrice() / 100 * $this->value);
-        }
-        return $this->value * -1;
-    }
-
-    /**
-     * Calculate weight of item, based on quantity
-     *
-     * @param  int  $quantity
-     * @return float
-     */
-    public function calculateWeight($quantity)
-    {
-        return 0;
-    }
-
-    /**
-     * Consistent label identifier for orderable item
-     *
-     * @return string
-     */
-    public function label()
-    {
-        return "{$this->code} ({$this->description})";
-    }
-
-    /**
-     * Get path to an image representing the orderable item
-     *
-     * @return string
-     */
-    public function image()
-    {
-        return '';
-    }
-
-    /**
-     * Calculate amount to refund, based on item and quantity
-     *
-     * @param  Bozboz\Ecommerce\Order\Item  $item
-     * @param  int  $quantity
-     * @return int
-     */
-    public function calculateAmountToRefund(Item $item, $quantity)
-    {
-        throw new \Exception('Method not implemented');
-    }
-
-    /**
-     * Determine if orderable is taxable or not
-     *
-     * @return boolean
-     */
-    public function isTaxable()
-    {
-        return false;
-    }
-
-    /**
-     * Perform any actions necessary upon successful purchase
-     *
-     * @param  int $quantity
-     * @return void
-     */
-    public function purchased($quantity)
-    {
-        $this->current_uses += 1;
-        $this->save();
     }
 }

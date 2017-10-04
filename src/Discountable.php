@@ -3,8 +3,9 @@
 namespace Bozboz\Ecommerce\Vouchers;
 
 use Bozboz\Ecommerce\Orders\Item;
+use Bozboz\Ecommerce\Vouchers\Contracts\Voucher as VoucherContract;
 
 interface Discountable
 {
-	public function getDiscountedAmount(Voucher $voucher, Item $item);
+	public function getDiscountedAmount(VoucherContract $voucher, Item $item);
 }
