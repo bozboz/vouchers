@@ -4,10 +4,9 @@ namespace Bozboz\Ecommerce\Vouchers;
 
 use Bozboz\Ecommerce\Orders\Item;
 use Bozboz\Ecommerce\Orders\Order;
-use Bozboz\Ecommerce\Orders\OrderableException;
 use Bozboz\Ecommerce\Orders\Orderable;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
+use Bozboz\Ecommerce\Orders\OrderableException;
 
 abstract class OrderableVoucher extends Voucher implements Orderable
 {
