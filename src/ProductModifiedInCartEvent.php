@@ -10,7 +10,7 @@ class ProductModifiedInCartEvent
 	{
 		$voucherItems = $item->order->items()
 			->with('orderable')
-			->where('orderable_type', OrderableVoucher::class)
+			->where('orderable_type', 'voucher')
 			->get();
 
 		foreach($voucherItems as $voucherItem) {
