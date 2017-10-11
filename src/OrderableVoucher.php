@@ -71,7 +71,7 @@ abstract class OrderableVoucher extends Voucher implements Orderable
         }
 
         $messages = [
-            'current_uses' => 'This voucher has exceded the max use',
+            'current_uses.max' => 'This voucher has exceded the maximum number of uses',
             'before' => 'This voucher is not available yet',
             'after' => 'This voucher has expired',
             'order_total.min' => sprintf(
