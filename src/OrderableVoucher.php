@@ -210,7 +210,7 @@ abstract class OrderableVoucher extends Voucher implements Orderable
      */
     public function calculateAmountToRefund(Item $item, $quantity)
     {
-        return 0;
+        return $item->price_pence_ex_vat;
     }
 
     /**
