@@ -41,6 +41,11 @@ abstract class Voucher extends Model implements Contract
         return new VoucherValidator;
     }
 
+    public function getMaximumCheckoutQuantityAttribute()
+    {
+        return 1;
+    }
+
     public function getWholeValueAttribute()
     {
         if ($this->is_percent) {
