@@ -61,8 +61,8 @@ abstract class OrderableVoucher extends Voucher implements Orderable
         ];
 
         $rules = [
-            'start_date' => 'before:' . date('Y-m-d'),
-            'end_date' => 'after:' . date('Y-m-d'),
+            'start_date' => 'before:' . date('Y-m-d H:i:s'),
+            'end_date' => 'after:' . date('Y-m-d H:i:s'),
             'order_total' => "numeric|min:$this->min_order_pence" . ($this->max_order_pence ? "|max:$this->max_order_pence" : null),
         ];
 
